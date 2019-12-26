@@ -24,7 +24,7 @@ app.set('views', path.join(__dirname, 'views'))
 const apiKey = process.env.SHOPIFY_API_KEY
 const apiSecret = process.env.SHOPIFY_API_SECRET
 const scopes = 'read_orders, write_orders, read_draft_orders, write_draft_orders'
-const forwardingAddress = 'https://f15b639b.ngrok.io'
+const forwardingAddress = 'https://yellow-report.herokuapp.com'
 
 app.get('/', (req, res) => {
   if(req.query.orders) {
