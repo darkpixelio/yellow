@@ -24,7 +24,7 @@ app.set('views', path.join(__dirname, 'views'))
 const apiKey = process.env.SHOPIFY_API_KEY
 const apiSecret = process.env.SHOPIFY_API_SECRET
 const scopes = 'read_orders, write_orders, read_draft_orders, write_draft_orders'
-const forwardingAddress = 'https://4dc65411.ngrok.io'
+const forwardingAddress = 'https://f15b639b.ngrok.io'
 
 app.get('/', (req, res) => {
   if(req.query.orders) {
@@ -101,7 +101,7 @@ app.get('/install/callback', async (req, res) => {
     }
 
     request.get(orderRequestUrl, { headers: orderRequestHeader }).then(orders => {
-      
+      console.log(JSON.parse(orders))
       res.render('index', {orders: orders})
     })
     .catch(e => {
