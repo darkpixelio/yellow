@@ -25,15 +25,10 @@ const apiKey = process.env.SHOPIFY_API_KEY
 const apiSecret = process.env.SHOPIFY_API_SECRET
 const scopes = 'read_orders, write_orders, read_draft_orders, write_draft_orders'
 const forwardingAddress = 'https://yellow-report.herokuapp.com'
+const port = process.env.PORT || 3000
 
 app.get('/', (req, res) => {
-  if(req.query.orders) {
-    
-    res.render('index', {orders: req.query.orders})
-  }
-  else {
-    res.send('Welcome to the yellow app')
-  }
+  res.send('Hello World')
 })
 
 app.get('/install', (req, res) => {
@@ -113,6 +108,6 @@ app.get('/install/callback', async (req, res) => {
   }
 })
 
-app.listen(process.env.PORT, () => {
-  console.log('App is running on port 3000')
+app.listen(port, () => {
+  console.log(`App is running on port ${port}`)
 })
