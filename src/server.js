@@ -97,6 +97,7 @@ app.get('/install/callback', async (req, res) => {
 
     request.get(orderRequestUrl, { headers: orderRequestHeader }).then(orders => {
       console.log(JSON.parse(orders))
+      res.cookie('token', token)
       res.render('index', {orders: orders})
     })
     .catch(e => {
