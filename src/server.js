@@ -188,7 +188,7 @@ app.get('/get-orders', (req, res) => {
 
         draft['id'] = parseInt(order.id.split('/').slice(-1)[0])
         draft['name'] = order.name
-        draft['created_at'] = order.name
+        draft['created_at'] = order.createdAt
         draft['customer'] = {}
         draft['customer']['first_name'] = order.customer.firstName
         draft['customer']['last_name'] = order.customer.lastName
