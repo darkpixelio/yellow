@@ -98,18 +98,72 @@ app.get('/install/callback', async (req, res) => {
     const tokenResponse = await request.post(accessTokenRequestUrl, { json: accessTokenPayload })
     const token = tokenResponse.access_token
     
-    const orderRequestUrl = `https://${shop}/admin/api/2019-10/orders.json`
+    const orderRequestUrl = `https://${shop}/admin/api/2020-01/graphql.json`
     const orderRequestHeader = {
       'X-Shopify-Access-Token': token
     }
 
-    request.get(orderRequestUrl, { headers: orderRequestHeader }).then(orders => {
+    let gqlQuery = `
+    query {
+      orders(first: 100) {
+        edges {
+          cursor,
+          node {
+            id,
+            name,
+            createdAt,
+            customer {
+              firstName,
+              lastName
+            }
+            fulfillments {
+              status
+            }
+            
+            email,
+            metafield(namespace: "fulfillment_service", key: "fulfillment_by") {
+              value
+            }
+            totalPriceSet {
+              shopMoney {
+                amount
+              }
+              presentmentMoney {
+                amount
+              }
+            }
+          }
+        }
+      }
+    }
+    `
+    const client = new GraphQLClient(orderRequestUrl, { headers: orderRequestHeader })
+    client.request(gqlQuery)
+
+    let orderArray = []
+    .then(data => {
+      for(let item of data.edges) {
+        let draft = {}
+        let order = item.node
+
+        draft['id'] = order.id.split('/').slice(-1)[0]
+        draft['name'] = order.name
+        draft['created_at'] = order.name
+        draft['customer']['first_name'] = order.customer.firstName
+        draft['customer']['last_name'] = order.customer.lastName
+        draft['fulfillment_status'] = !order.fulfillments[0].status ? null : order.fulfillments[0].status
+        draft['total_price'] = order.totalPriceSet.shopMoney.amount
+        draft['fulfilled_by'] = !order.metafield.value ? '' : order.metafield.value
+
+        orderArray.push(draft)
+      }
+
       res.cookie('token', token)
       
-      res.render('index', {orders: orders})
+      res.render('index', {orders: orderArray})
     })
     .catch(e => {
-      console.log(e)
+      res.json({ error: e })
     })
   }
   else {
