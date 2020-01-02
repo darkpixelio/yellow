@@ -207,7 +207,7 @@ app.get('/get-orders', (req, res) => {
 
 app.get('/generate-report', (req, res) => {
   
-  const shop = querystring.parse(req.headers.referer).shop
+  const shop = cookie.parse(req.headers.cookie).shop
   const token = cookie.parse(req.headers.cookie).token
 
   let orderRequestUrl = `https://${shop}/admin/api/2020-01/graphql.json`
