@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "babel-node src/server"
+    "start": "babel-node src/server",
+    "generate-sheet": "babel-node src/middlewares/report"
   },
   "author": "DarkPixel",
   "license": "ISC",
@@ -16,11 +17,14 @@
     "@babel/preset-env": "^7.7.7",
     "body-parser": "^1.19.0",
     "cookie": "^0.4.0",
+    "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "ejs": "^3.0.1",
     "express": "^4.17.1",
+    "graphql-request": "^1.8.2",
     "nonce": "^1.0.4",
     "request": "^2.88.0",
-    "request-promise": "^4.2.5"
+    "request-promise": "^4.2.5",
+    "xlsx": "^0.15.4"
   }
 }

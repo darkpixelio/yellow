@@ -3,15 +3,24 @@ import path from 'path'
 import dotenv from 'dotenv'
 import express from 'express'
 import bodyParser from 'body-parser'
+import cors from 'cors'
 import cookie from 'cookie'
 import crypto from 'crypto'
 import nonce from 'nonce'
 import querystring from 'querystring'
 import request from 'request-promise'
+import { GraphQLClient } from 'graphql-request'
+import XLSX from 'xlsx'
 
 // Initialize necessary modules
 dotenv.config()
 const app = express()
+
+// Use CORS
+app.use(cors())
+// Body Parser for form data
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json());
 
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')))
@@ -47,7 +56,6 @@ app.get('/install', (req, res) => {
 })
 
 app.get('/install/callback', async (req, res) => {
-  console.log(req.query)
   const { shop, hmac, code, state } = req.query
   const stateCookie = cookie.parse(req.headers.cookie).state
 
@@ -96,8 +104,8 @@ app.get('/install/callback', async (req, res) => {
     }
 
     request.get(orderRequestUrl, { headers: orderRequestHeader }).then(orders => {
-      console.log(JSON.parse(orders))
       res.cookie('token', token)
+      
       res.render('index', {orders: orders})
     })
     .catch(e => {
@@ -107,6 +115,136 @@ app.get('/install/callback', async (req, res) => {
   else {
     res.status(400).send('Required parameter missing')
   }
+})
+
+app.post('/save', (req, res) => {
+  const token = cookie.parse(req.headers.cookie).token
+  const shop = querystring.parse(req.headers.referer).shop
+  const reqBody = req.body
+  console.log(reqBody)
+  const reqHeaders = {
+    'X-Shopify-Access-Token': token
+  }
+  let reqUrl = `https://${shop}/admin/api/2019-10/orders/${reqBody.order_id}/metafields.json`
+  let payload = {
+    "metafield": {
+      "namespace": "fulfillment_service",
+      "key": "fulfillment_by",
+      "value": `${reqBody.fulfillment_by}`,
+      "value_type": "string"
+    }
+  }
+  request.post(reqUrl, { headers: reqHeaders, body: payload, json: true })
+  .then(response => {
+    console.log(response)
+    res.json(response)
+  })
+  .catch(e => {
+    console.log(e)
+  })
+})
+
+app.get('/generate-report', (req, res) => {
+  
+  const shop = querystring.parse(req.headers.referer).shop
+  console.log(shop)
+  const token = cookie.parse(req.headers.cookie).token
+
+  let orderRequestUrl = `https://${shop}/admin/api/2020-01/graphql.json`
+  let gqlQuery = `
+  query {
+    orders(first: 100) {
+      edges {
+        cursor,
+        node {
+          id,
+          email,
+          transactions(first: 100) {
+            accountNumber,
+            amountSet {
+              presentmentMoney {
+                amount
+                currencyCode
+              }
+              shopMoney {
+                amount
+                currencyCode
+              }
+            }
+            authorizationCode
+            createdAt
+            errorCode
+            formattedGateway
+            gateway
+            id
+            kind
+            status
+            order {
+              id
+              name
+            }
+            
+          }
+          metafield(namespace: "fulfillment_service", key: "fulfillment_by") {
+            value
+          }
+        }
+      }
+    }
+  }
+  `
+  let options = {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': token
+    },
+    body: JSON.stringify({gqlQuery})
+  }
+  const reportArray = []
+  const client = new GraphQLClient(orderRequestUrl, { headers: { 'X-Shopify-Access-Token': token } })
+  client.request(gqlQuery)
+  .then(data => {
+    console.log(data)
+    for(let item of data.orders.edges) {
+      let order = item.node
+      
+
+      for(let transaction of order.transactions) {
+        let reportObject = {}
+        reportObject["Order"] = transaction.order.id.split('/').slice(-1)[0]
+        reportObject["Name"] = transaction.order.name
+        reportObject["Created At"] = transaction.createdAt
+        reportObject["Amount"] = transaction.amountSet.shopMoney.amount
+        reportObject["Currency"] = transaction.amountSet.shopMoney.currencyCode
+        reportObject["Gateway"] = transaction.gateway
+        reportObject["Card Type"] = ""
+        reportObject["Payment Status"] = transaction.status
+        reportObject["Fulllment Status"] = order.metafield.value
+        reportObject["Retrun/Refund Amount"] = ""
+        reportObject["Delivery charge"] = ""
+        reportObject["Cash collection charge"] = ""
+        reportObject["Deposit amount"] = ""
+        reportObject["courier payment reference"] = ""
+        reportObject["Consigmnent ID"] = ""
+        reportObject["Transaction ID"] = transaction.id.split('/').slice(-1)[0]
+
+        reportArray.push(reportObject)
+      }
+    }
+    console.log(reportArray)
+    let ws = XLSX.utils.json_to_sheet(reportArray, { })
+    let wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Report')
+    let date = Date.now()
+
+    XLSX.writeFileAsync(`./src/public/exports/report_${date}.xlsx`, wb, success => {
+      res.json({ download_link: `/exports/report_${date}.xlsx` })
+    })
+  })
+  .catch(e => {
+    console.log(e)
+  })
+
 })
 
 app.listen(port, () => {
