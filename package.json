@@ -23,6 +23,7 @@
     "express": "^4.17.1",
     "graphql-request": "^1.8.2",
     "nonce": "^1.0.4",
+    "pug": "^2.0.4",
     "request": "^2.88.0",
     "request-promise": "^4.2.5",
     "xlsx": "^0.15.4"

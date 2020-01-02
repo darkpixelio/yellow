@@ -33,11 +33,12 @@ app.set('views', path.join(__dirname, 'views'))
 const apiKey = process.env.SHOPIFY_API_KEY
 const apiSecret = process.env.SHOPIFY_API_SECRET
 const scopes = 'read_orders, write_orders, read_draft_orders, write_draft_orders, read_customers, write_customers'
-const forwardingAddress = 'https://yellow-report.herokuapp.com'
+// const forwardingAddress = 'https://yellow-report.herokuapp.com'
+const forwardingAddress = 'https://64a9133f.ngrok.io'
 const port = process.env.PORT || 3000
 
 app.get('/', (req, res) => {
-  res.send('Hello World')
+  res.render('index')
 })
 
 app.get('/install', (req, res) => {
@@ -98,7 +99,49 @@ app.get('/install/callback', async (req, res) => {
     const tokenResponse = await request.post(accessTokenRequestUrl, { json: accessTokenPayload })
     const token = tokenResponse.access_token
     
-    const orderRequestUrl = `https://${shop}/admin/api/2020-01/graphql.json`
+    
+    res.cookie('token', token)
+    res.cookie('shop', shop)
+    res.redirect('/')
+  }
+  else {
+    res.status(400).send('Required parameter missing')
+  }
+})
+
+app.post('/save', (req, res) => {
+  const token = cookie.parse(req.headers.cookie).token
+  const shop = querystring.parse(req.headers.referer).shop
+  const reqBody = req.body
+  console.log(reqBody)
+  const reqHeaders = {
+    'X-Shopify-Access-Token': token
+  }
+  let reqUrl = `https://${shop}/admin/api/2019-10/orders/${reqBody.order_id}/metafields.json`
+  let payload = {
+    "metafield": {
+      "namespace": "fulfillment_service",
+      "key": "fulfillment_by",
+      "value": `${reqBody.fulfillment_by}`,
+      "value_type": "string"
+    }
+  }
+  request.post(reqUrl, { headers: reqHeaders, body: payload, json: true })
+  .then(response => {
+    console.log(response)
+    res.json(response)
+  })
+  .catch(e => {
+    console.log(e)
+  })
+})
+
+app.get('/get-orders', (req, res) => {
+  console.log(req.headers)
+  const shop = cookie.parse(req.headers.cookie).shop
+  const token = cookie.parse(req.headers.cookie).token
+
+  const orderRequestUrl = `https://${shop}/admin/api/2020-01/graphql.json`
     const orderRequestHeader = {
       'X-Shopify-Access-Token': token
     }
@@ -136,11 +179,10 @@ app.get('/install/callback', async (req, res) => {
       }
     }
     `
-    let orderArray = []
+    let orders = []
     const client = new GraphQLClient(orderRequestUrl, { headers: orderRequestHeader })
     client.request(gqlQuery)
     .then(data => {
-      console.log(data)
       for(let item of data.orders.edges) {
         let draft = {}
         let order = item.node
@@ -155,54 +197,18 @@ app.get('/install/callback', async (req, res) => {
         draft['total_price'] = order.totalPriceSet.shopMoney.amount
         draft['fulfilled_by'] = !order.metafield.value ? '' : order.metafield.value
 
-        orderArray.push(draft)
+        orders.push(draft)
       }
-
-      res.cookie('token', token)
-      
-      res.render('index', {orders: orderArray})
+      res.json(orders)
     })
     .catch(e => {
-      console.log(e)
-      res.json({ error: e })
+      res.json({error: e})
     })
-  }
-  else {
-    res.status(400).send('Required parameter missing')
-  }
-})
-
-app.post('/save', (req, res) => {
-  const token = cookie.parse(req.headers.cookie).token
-  const shop = querystring.parse(req.headers.referer).shop
-  const reqBody = req.body
-  console.log(reqBody)
-  const reqHeaders = {
-    'X-Shopify-Access-Token': token
-  }
-  let reqUrl = `https://${shop}/admin/api/2019-10/orders/${reqBody.order_id}/metafields.json`
-  let payload = {
-    "metafield": {
-      "namespace": "fulfillment_service",
-      "key": "fulfillment_by",
-      "value": `${reqBody.fulfillment_by}`,
-      "value_type": "string"
-    }
-  }
-  request.post(reqUrl, { headers: reqHeaders, body: payload, json: true })
-  .then(response => {
-    console.log(response)
-    res.json(response)
-  })
-  .catch(e => {
-    console.log(e)
-  })
 })
 
 app.get('/generate-report', (req, res) => {
   
   const shop = querystring.parse(req.headers.referer).shop
-  console.log(shop)
   const token = cookie.parse(req.headers.cookie).token
 
   let orderRequestUrl = `https://${shop}/admin/api/2020-01/graphql.json`
