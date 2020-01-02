@@ -32,7 +32,7 @@ app.set('views', path.join(__dirname, 'views'))
 // Initialize necessary veriables
 const apiKey = process.env.SHOPIFY_API_KEY
 const apiSecret = process.env.SHOPIFY_API_SECRET
-const scopes = 'read_orders, write_orders, read_draft_orders, write_draft_orders'
+const scopes = 'read_orders, write_orders, read_draft_orders, write_draft_orders, read_customers, write_customers'
 const forwardingAddress = 'https://yellow-report.herokuapp.com'
 const port = process.env.PORT || 3000
 
@@ -105,7 +105,7 @@ app.get('/install/callback', async (req, res) => {
 
     let gqlQuery = `
     query {
-      orders(first: 100) {
+      orders(first: 10) {
         edges {
           cursor,
           node {
@@ -119,7 +119,6 @@ app.get('/install/callback', async (req, res) => {
             fulfillments {
               status
             }
-            
             email,
             metafield(namespace: "fulfillment_service", key: "fulfillment_by") {
               value
@@ -137,21 +136,22 @@ app.get('/install/callback', async (req, res) => {
       }
     }
     `
+    let orderArray = []
     const client = new GraphQLClient(orderRequestUrl, { headers: orderRequestHeader })
     client.request(gqlQuery)
-
-    let orderArray = []
     .then(data => {
-      for(let item of data.edges) {
+      console.log(data)
+      for(let item of data.orders.edges) {
         let draft = {}
         let order = item.node
 
         draft['id'] = order.id.split('/').slice(-1)[0]
         draft['name'] = order.name
         draft['created_at'] = order.name
+        draft['customer'] = {}
         draft['customer']['first_name'] = order.customer.firstName
         draft['customer']['last_name'] = order.customer.lastName
-        draft['fulfillment_status'] = !order.fulfillments[0].status ? null : order.fulfillments[0].status
+        draft['fulfillment_status'] = !order.fulfillments[0] ? null : order.fulfillments[0].status
         draft['total_price'] = order.totalPriceSet.shopMoney.amount
         draft['fulfilled_by'] = !order.metafield.value ? '' : order.metafield.value
 
@@ -163,6 +163,7 @@ app.get('/install/callback', async (req, res) => {
       res.render('index', {orders: orderArray})
     })
     .catch(e => {
+      console.log(e)
       res.json({ error: e })
     })
   }
