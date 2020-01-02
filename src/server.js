@@ -140,7 +140,7 @@ app.get('/get-orders', (req, res) => {
   const shop = cookie.parse(req.headers.cookie).shop
   const token = cookie.parse(req.headers.cookie).token
 
-  const orderRequestUrl = `https://${shop}/admin/api/2020-01/graphql.json`
+  const orderRequestUrl = `https://${shop}/admin/api/2019-10/orders/${reqBody.order_id}/metafields.json`
     const orderRequestHeader = {
       'X-Shopify-Access-Token': token
     }
@@ -186,7 +186,7 @@ app.get('/get-orders', (req, res) => {
         let draft = {}
         let order = item.node
 
-        draft['id'] = order.id.split('/').slice(-1)[0]
+        draft['id'] = parseInt(order.id.split('/').slice(-1)[0])
         draft['name'] = order.name
         draft['created_at'] = order.name
         draft['customer'] = {}
