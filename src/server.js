@@ -140,7 +140,7 @@ app.get('/get-orders', (req, res) => {
   const shop = cookie.parse(req.headers.cookie).shop
   const token = cookie.parse(req.headers.cookie).token
 
-  const orderRequestUrl = `https://${shop}/admin/api/2019-10/orders/${reqBody.order_id}/metafields.json`
+  const orderRequestUrl = `https://${shop}/admin/api/2020-01/graphql.json`
     const orderRequestHeader = {
       'X-Shopify-Access-Token': token
     }
