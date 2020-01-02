@@ -110,7 +110,7 @@ app.get('/install/callback', async (req, res) => {
 
 app.post('/save', (req, res) => {
   const token = cookie.parse(req.headers.cookie).token
-  const shop = querystring.parse(req.headers.referer).shop
+  const shop = cookie.parse(req.headers.cookie).shop
   const reqBody = req.body
   console.log(reqBody)
   const reqHeaders = {
