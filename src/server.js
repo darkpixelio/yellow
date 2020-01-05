@@ -147,7 +147,7 @@ app.get('/get-orders', (req, res) => {
 
     let gqlQuery = `
     query {
-      orders(first: 10) {
+      orders(first: 100) {
         edges {
           cursor,
           node {
