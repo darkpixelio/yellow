@@ -32,9 +32,10 @@ app.set('views', path.join(__dirname, 'views'))
 // Initialize necessary veriables
 const apiKey = process.env.SHOPIFY_API_KEY
 const apiSecret = process.env.SHOPIFY_API_SECRET
-const scopes = 'read_fulfillments, write_fulfillments, read_orders, write_orders, read_draft_orders, write_draft_orders, read_customers, write_customers, write_assigned_fulfillment_orders'
+const scopes = 'write_merchant_managed_fulfillment_orders, read_merchant_managed_fulfillment_orders, read_fulfillments, write_fulfillments, read_orders, write_orders, read_draft_orders, write_draft_orders, read_customers, write_customers, write_assigned_fulfillment_orders, read_assigned_fulfillment_orders, read_products, write_products'
+
 const forwardingAddress = 'https://yellow-report.herokuapp.com'
-// const forwardingAddress = 'https://bed760fe.ngrok.io'
+// const forwardingAddress = 'https://d739a451.ngrok.io'
 const port = process.env.PORT || 3000
 
 app.get('/', (req, res) => {
@@ -168,9 +169,10 @@ app.get('/generate-report', (req, res) => {
   const client = new GraphQLClient(orderRequestUrl, { headers: { 'X-Shopify-Access-Token': token } })
   client.request(gqlQuery)
   .then(data => {
-    console.log(data)
+    console.log(data.orders.edges)
     for(let item of data.orders.edges) {
       let order = item.node
+      console.log(order.metafield)
 
 
       for(let transaction of order.transactions) {
@@ -183,7 +185,7 @@ app.get('/generate-report', (req, res) => {
         reportObject["Gateway"] = transaction.gateway
         reportObject["Card Type"] = ""
         reportObject["Payment Status"] = transaction.status
-        reportObject["Fulllment Status"] = order.metafield.value
+        reportObject["Fulllment Status"] = !order.metafield ? "Unfulfilled" : order.metafield.value
         reportObject["Retrun/Refund Amount"] = ""
         reportObject["Delivery charge"] = ""
         reportObject["Cash collection charge"] = ""
@@ -247,6 +249,7 @@ app.post('/save', (req, res) => {
 
   const gqlQuery = `
   mutation {
+    ${ vars.fulfillmentValue != 'Unfulfilled' ? fulfillmentCreateMutation : fulfilmentClose }
     orderUpdate(input: {
       id: "${vars.orderId}",
       metafields: {
@@ -286,8 +289,6 @@ app.post('/save', (req, res) => {
         }
       }
     }
-
-    ${ vars.fulfillmentValue != 'Unfulfilled' ? fulfillmentCreateMutation : fulfilmentClose }
   }
   `
   console.log(gqlQuery)
@@ -299,7 +300,7 @@ app.post('/save', (req, res) => {
 
   client.request(gqlQuery)
   .then(data => {
-    console.log(data)
+    console.log(data.orderUpdate.order.metafield)
     res.json(data)
   })
   .catch(e => console.log(e))
@@ -371,12 +372,8 @@ app.get('/get-orders', (req, res) => {
         draft['fulfillment_id'] = !order.metafield ? null : order.metafield.id
         draft['fulfillment_status'] = order.displayFulfillmentStatus
         draft['payment_status'] = order.displayFinancialStatus
-        if (order.fulfillments[0]) {
-          let newId = order.fulfillments.find(item => {
-            return item.status == 'SUCCESS'
-          })
-          draft['fulfillment_order_id'] = !newId ? null : newId.id
-        }
+        let activeFulfillment = order.fulfillments.find(item => item.status === 'SUCCESS')
+        draft['fulfillment_order_id'] = !activeFulfillment ? null : activeFulfillment.id
 
         orders.push(draft)
       }
