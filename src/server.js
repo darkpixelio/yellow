@@ -204,7 +204,7 @@ app.get('/generate-report', (req, res) => {
     let date = Date.now()
 
     XLSX.writeFileAsync(`./src/public/exports/report_${date}.xlsx`, wb, success => {
-      res.json({ download_link: `/public/exports/report_${date}.xlsx` })
+      res.json({ download_link: `/exports/report_${date}.xlsx` })
     })
   })
   .catch(e => {
