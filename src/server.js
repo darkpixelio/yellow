@@ -32,12 +32,13 @@ app.set('views', path.join(__dirname, 'views'))
 // Initialize necessary veriables
 const apiKey = process.env.SHOPIFY_API_KEY
 const apiSecret = process.env.SHOPIFY_API_SECRET
-const scopes = 'read_orders, write_orders, read_draft_orders, write_draft_orders, read_customers, write_customers'
+const scopes = 'read_fulfillments, write_fulfillments, read_orders, write_orders, read_draft_orders, write_draft_orders, read_customers, write_customers, write_assigned_fulfillment_orders'
 const forwardingAddress = 'https://yellow-report.herokuapp.com'
+// const forwardingAddress = 'https://bed760fe.ngrok.io'
 const port = process.env.PORT || 3000
 
 app.get('/', (req, res) => {
-  res.render('index')
+  res.sendFile()
 })
 
 app.get('/install', (req, res) => {
@@ -97,8 +98,8 @@ app.get('/install/callback', async (req, res) => {
 
     const tokenResponse = await request.post(accessTokenRequestUrl, { json: accessTokenPayload })
     const token = tokenResponse.access_token
-    
-    
+
+
     res.cookie('token', token)
     res.cookie('shop', shop)
     res.redirect('/')
@@ -112,31 +113,98 @@ app.post('/save', (req, res) => {
   const token = cookie.parse(req.headers.cookie).token
   const shop = cookie.parse(req.headers.cookie).shop
   const reqBody = req.body
-  console.log(reqBody)
+
+  const vars = {
+    locationId: "gid://shopify/Location/32102449231",
+    orderId: reqBody.order_id,
+    fulfillmentValue: reqBody.fulfillment_by,
+    metafield_id: reqBody.fulfillment_id,
+    fulfillment_order_id: reqBody.fulfillment_order_id
+  }
+
+  const fulfillmentCreateMutation = `
+    fulfillmentCreate(input: {
+      orderId: "${vars.orderId}"
+      locationId: "${vars.locationId}"
+    }) {
+      fulfillment {
+        id
+        name
+        status
+      }
+    }
+  `
+
+  const fulfilmentClose = `
+  fulfillmentCancel(id: "${vars.fulfillment_order_id}") {
+      fulfillment {
+      id
+    }
+  }
+  `
+
+  const gqlQuery = `
+  mutation {
+    orderUpdate(input: {
+      id: "${vars.orderId}",
+      metafields: {
+        id: ${!vars.metafield_id ? null : `"${vars.metafield_id}"`},
+        namespace: "fulfillment_service",
+        key: "fulfillment_by",
+        value: "${vars.fulfillmentValue}",
+        valueType: STRING
+      }
+    }) {
+      order {
+        id
+        name
+        createdAt
+        customer{
+          firstName
+          lastName
+        }
+        displayFinancialStatus
+        displayFulfillmentStatus
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        fulfillments{
+          id
+          status
+        }
+        metafield(
+          namespace: "fulfillment_service",
+          key: "fulfillment_by",
+        ) {
+          id
+          value
+        }
+      }
+    }
+
+    ${ vars.fulfillmentValue != 'Unfulfilled' ? fulfillmentCreateMutation : fulfilmentClose }
+  }
+  `
+  console.log(gqlQuery)
   const reqHeaders = {
     'X-Shopify-Access-Token': token
   }
-  let reqUrl = `https://${shop}/admin/api/2019-10/orders/${reqBody.order_id}/metafields.json`
-  let payload = {
-    "metafield": {
-      "namespace": "fulfillment_service",
-      "key": "fulfillment_by",
-      "value": `${reqBody.fulfillment_by}`,
-      "value_type": "string"
-    }
-  }
-  request.post(reqUrl, { headers: reqHeaders, body: payload, json: true })
-  .then(response => {
-    console.log(response)
-    res.json(response)
+  const reqUrl = `https://${shop}/admin/api/2020-01/graphql.json`
+  const client = new GraphQLClient(reqUrl, { headers: reqHeaders })
+
+  client.request(gqlQuery)
+  .then(data => {
+    console.log(data)
+    res.json(data)
   })
-  .catch(e => {
-    console.log(e)
-  })
+  .catch(e => console.log(e))
 })
 
 app.get('/get-orders', (req, res) => {
-  console.log(req.headers)
+  // console.log(req.headers)
   const shop = cookie.parse(req.headers.cookie).shop
   const token = cookie.parse(req.headers.cookie).token
 
@@ -147,22 +215,26 @@ app.get('/get-orders', (req, res) => {
 
     let gqlQuery = `
     query {
-      orders(first: 100) {
+      orders(first: 20) {
         edges {
           cursor,
           node {
             id,
             name,
             createdAt,
+            displayFinancialStatus
+            displayFulfillmentStatus
             customer {
               firstName,
               lastName
             }
-            fulfillments {
+            fulfillments{
+              id
               status
             }
             email,
             metafield(namespace: "fulfillment_service", key: "fulfillment_by") {
+              id
               value
             }
             totalPriceSet {
@@ -185,28 +257,36 @@ app.get('/get-orders', (req, res) => {
       for(let item of data.orders.edges) {
         let draft = {}
         let order = item.node
-
-        draft['id'] = parseInt(order.id.split('/').slice(-1)[0])
+        console.log(order)
+        draft['id'] = order.id
         draft['name'] = order.name
         draft['created_at'] = order.createdAt
         draft['customer'] = {}
         draft['customer']['first_name'] = order.customer.firstName
         draft['customer']['last_name'] = order.customer.lastName
-        draft['fulfillment_status'] = !order.fulfillments[0] ? null : order.fulfillments[0].status
         draft['total_price'] = order.totalPriceSet.shopMoney.amount
-        draft['fulfilled_by'] = !order.metafield.value ? '' : order.metafield.value
+        draft['fulfilled_by'] = !order.metafield ? '' : order.metafield.value
+        draft['fulfillment_id'] = !order.metafield ? null : order.metafield.id
+        draft['fulfillment_status'] = order.displayFulfillmentStatus
+        draft['payment_status'] = order.displayFinancialStatus
+        if (order.fulfillments[0]) {
+          let newId = order.fulfillments.find(item => {
+            return item.status == 'SUCCESS'
+          })
+          draft['fulfillment_order_id'] = !newId ? null : newId.id
+        }
 
         orders.push(draft)
       }
       res.json(orders)
     })
     .catch(e => {
-      res.json({error: e})
+      console.log(e)
     })
 })
 
 app.get('/generate-report', (req, res) => {
-  
+
   const shop = cookie.parse(req.headers.cookie).shop
   const token = cookie.parse(req.headers.cookie).token
 
@@ -243,7 +323,7 @@ app.get('/generate-report', (req, res) => {
               id
               name
             }
-            
+
           }
           metafield(namespace: "fulfillment_service", key: "fulfillment_by") {
             value
@@ -267,7 +347,7 @@ app.get('/generate-report', (req, res) => {
     console.log(data)
     for(let item of data.orders.edges) {
       let order = item.node
-      
+
 
       for(let transaction of order.transactions) {
         let reportObject = {}
