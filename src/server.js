@@ -35,7 +35,7 @@ const apiSecret = process.env.SHOPIFY_API_SECRET
 const scopes = 'write_merchant_managed_fulfillment_orders, read_merchant_managed_fulfillment_orders, read_fulfillments, write_fulfillments, read_orders, write_orders, read_draft_orders, write_draft_orders, read_customers, write_customers, write_assigned_fulfillment_orders, read_assigned_fulfillment_orders, read_products, write_products'
 
 const forwardingAddress = 'https://yellow-report.herokuapp.com'
-// const forwardingAddress = 'https://d739a451.ngrok.io'
+// const forwardingAddress = 'https://70d8ace2.ngrok.io'
 const port = process.env.PORT || 3000
 
 app.get('/', (req, res) => {
@@ -203,8 +203,8 @@ app.get('/generate-report', (req, res) => {
     XLSX.utils.book_append_sheet(wb, ws, 'Report')
     let date = Date.now()
 
-    XLSX.writeFileAsync(`./src/public/exports/report_${date}.xlsx`, wb, success => {
-      res.json({ download_link: `/exports/report_${date}.xlsx` })
+    XLSX.writeFileAsync(`./src/public/report_${date}.xlsx`, wb, success => {
+      res.json({ download_link: `/report_${date}.xlsx` })
     })
   })
   .catch(e => {
@@ -365,8 +365,8 @@ app.get('/get-orders', (req, res) => {
         draft['name'] = order.name
         draft['created_at'] = order.createdAt
         draft['customer'] = {}
-        draft['customer']['first_name'] = order.customer.firstName
-        draft['customer']['last_name'] = order.customer.lastName
+        draft['customer']['first_name'] = order.customer ? order.customer.firstName : 'No'
+        draft['customer']['last_name'] = order.customer ? order.customer.lastName : 'Customer'
         draft['total_price'] = order.totalPriceSet.shopMoney.amount
         draft['fulfilled_by'] = !order.metafield ? '' : order.metafield.value
         draft['fulfillment_id'] = !order.metafield ? null : order.metafield.id
