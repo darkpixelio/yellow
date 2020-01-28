@@ -18,7 +18,7 @@ const updateFulfillment = async (req, res, next) => {
     const updateResponse = {}
     updateResponse['fulfillment_status'] = updateCourier.orderUpdate.order.displayFulfillmentStatus
     updateResponse['fulfilled_by'] = updateCourier.orderUpdate.order.metafield.value
-    let activeFulfillment = updateCourier.orderUpdate.fulfillments.find(item => item.status === 'SUCCESS')
+    let activeFulfillment = updateCourier.orderUpdate.order.fulfillments.find(item => item.status === 'SUCCESS')
     updateResponse['fulfillment_order_id'] = !activeFulfillment ? null : activeFulfillment.id
 
     res.locals.__update = updateResponse
