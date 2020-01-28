@@ -1,20 +1,30 @@
 {
   "name": "yellow",
   "version": "1.0.0",
-  "description": "Order Manage App",
+  "description": "",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "babel-node src/server",
-    "generate-sheet": "babel-node src/middlewares/report"
+    "build": "npx babel src --out-dir dist/src --ignore 'assets/' && npx babel server.js --out-dir dist",
+    "prod": "npm run build && node dist/server",
+    "dev": "nodemon --exec babel-node server",
+    "start": "babel-node server"
   },
-  "author": "DarkPixel",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/darkpixelio/yellow.git"
+  },
+  "author": "Tahmid Hasan",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/darkpixelio/yellow/issues"
+  },
+  "homepage": "https://github.com/darkpixelio/yellow#readme",
   "dependencies": {
-    "@babel/cli": "^7.7.7",
-    "@babel/core": "^7.7.7",
-    "@babel/node": "^7.7.7",
-    "@babel/preset-env": "^7.7.7",
+    "@babel/cli": "^7.8.3",
+    "@babel/core": "^7.8.3",
+    "@babel/node": "^7.8.3",
+    "@babel/preset-env": "^7.8.3",
     "body-parser": "^1.19.0",
     "cookie": "^0.4.0",
     "cors": "^2.8.5",
@@ -23,7 +33,6 @@
     "express": "^4.17.1",
     "graphql-request": "^1.8.2",
     "nonce": "^1.0.4",
-    "pug": "^2.0.4",
     "request": "^2.88.0",
     "request-promise": "^4.2.5",
     "xlsx": "^0.15.4"
