@@ -1,3 +1,3 @@
 export default {
-  appUri: 'production'
+  appUri: 'https://yellow-report.herokuapp.com'
 }
