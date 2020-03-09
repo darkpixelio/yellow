@@ -4,7 +4,6 @@ import bodyParser from 'body-parser'
 import cors from 'cors'
 
 import routes from './routes'
-import { setCookie } from './middlewares'
 
 const app = express()
 
@@ -21,7 +20,6 @@ app.set('views', path.join(__dirname, 'views'))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
-app.use(setCookie)
 app.use(routes)
 
 export default app
