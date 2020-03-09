@@ -15,6 +15,11 @@ const verifyShop = (req, res, next) => {
   next()
 }
 
+const setCookie = (req, res, next) => {
+  res.cookie({ sameSite: 'none', secure: true })
+  next()
+}
+
 export {
   verifyShop,
   verifyOrigin,
@@ -22,5 +27,6 @@ export {
   generateToken,
   getOrdersMiddleware,
   generateReport,
-  updateFulfillment
+  updateFulfillment,
+  setCookie
 }
