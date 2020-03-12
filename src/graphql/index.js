@@ -1,6 +1,6 @@
 import { getAllOrders, getOrdersByDate } from './queries/order'
 import { getLocation } from './queries/location'
-import { metafieldUpdate, fulfillmentCreateMutation, fulfilmentCloseMutation } from './mutations/fulfillment'
+import { metafieldUpdate, fulfillmentCreateMutation, fulfilmentCloseMutation, orderStatusUpdate } from './mutations/fulfillment'
 
 const gqlQuery = {
   fetchAllOrder: getAllOrders,
@@ -11,7 +11,8 @@ const gqlQuery = {
 const gqlMutations = {
   courierUpdate: metafieldUpdate,
   fulfillmentCreate: fulfillmentCreateMutation,
-  fulfillmentClose: fulfilmentCloseMutation
+  fulfillmentClose: fulfilmentCloseMutation,
+  statusUpdate: orderStatusUpdate
 }
 
 export { gqlQuery, gqlMutations }

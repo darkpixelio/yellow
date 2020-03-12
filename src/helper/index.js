@@ -2,7 +2,7 @@ import { verifyHmac } from './callback'
 import { getAccessToken } from './token'
 import { getAllOrders, getOrdersByDate } from './order'
 import { generateXLSX } from './report'
-import { updateFulfilledBy, getLocation } from './fulfillment'
+import { updateFulfilledBy, getLocation, updateOrderStatus } from './fulfillment'
 
 export {
   verifyHmac,
@@ -11,5 +11,6 @@ export {
   getOrdersByDate,
   generateXLSX,
   updateFulfilledBy,
-  getLocation
+  getLocation,
+  updateOrderStatus
 }

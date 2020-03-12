@@ -20,6 +20,25 @@ const updateFulfilledBy = (shop, token, mutation) => {
   })
 }
 
+const updateOrderStatus = (shop, token, mutation) => {
+  return new Promise(async (resolve, reject) => {
+    const requestUrl = `https://${shop}/admin/api/2020-01/graphql.json`
+    const requestHeaders = {
+      'X-Shopify-Access-Token': token
+    }
+
+    const client = new GraphQLClient(requestUrl, { headers: requestHeaders })
+
+    try {
+      const response = await client.request(mutation)
+      resolve(response)
+    }
+    catch(e) {
+      reject(e)
+    }
+  })
+}
+
 const getLocation = (shop, token) => {
   return new Promise(async (resolve, reject) => {
     const requestUrl = `https://${shop}/admin/api/2020-01/graphql.json`
@@ -39,4 +58,4 @@ const getLocation = (shop, token) => {
   })
 }
 
-export { updateFulfilledBy, getLocation }
+export { updateFulfilledBy, getLocation, updateOrderStatus }

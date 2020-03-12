@@ -67,4 +67,32 @@ const fulfilmentCloseMutation = data => {
   `
 }
 
-export { metafieldUpdate, fulfillmentCreateMutation, fulfilmentCloseMutation }
+const orderStatusUpdate = data => {
+  return `mutation {
+    orderUpdate(input: {
+      id: "${data.id}",
+      metafields: {
+        id: ${!data.metafield_id ? null : `"${data.metafield_id}"`},
+        namespace: "order_service",
+        key: "order_status",
+        value: "${data.order_status}",
+        valueType: STRING
+      }
+    }) {
+      order {
+        id
+        name
+        metafield(
+          namespace: "order_service",
+          key: "order_status",
+        ) {
+          id
+          value
+        }
+      }
+    }
+  }
+  `
+}
+
+export { metafieldUpdate, fulfillmentCreateMutation, fulfilmentCloseMutation, orderStatusUpdate }

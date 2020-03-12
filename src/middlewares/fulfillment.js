@@ -1,5 +1,5 @@
 import { gqlMutations } from '../graphql'
-import { updateFulfilledBy, getLocation } from '../helper'
+import { updateFulfilledBy, getLocation, updateOrderStatus } from '../helper'
 
 const updateFulfillment = async (req, res, next) => {
   const shop = res.locals.shop
@@ -29,4 +29,21 @@ const updateFulfillment = async (req, res, next) => {
   }
 }
 
-export { updateFulfillment }
+const updateOrderStatus = (req, res, next) => {
+  const shop = res.locals.shop
+  const token = res.locals.token
+  let data = req.body
+
+  let mutation = gqlMutations.statusUpdate(data)
+  
+  try {
+    let updateResponse = await updateOrderStatus(shop, token, mutation)
+    res.locals.__update = updateResponse
+    next()
+  }
+  catch(e) {
+    console.log(e)
+  }
+}
+
+export { updateFulfillment, updateOrderStatus }

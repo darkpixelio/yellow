@@ -2,7 +2,7 @@ import cookie from 'cookie'
 
 import { verifyOrigin, validateRequest, generateToken } from './callback'
 import { getOrdersMiddleware, generateReport } from './orders'
-import { updateFulfillment } from './fulfillment'
+import { updateFulfillment, updateOrderStatus } from './fulfillment'
 
 const verifyShop = (req, res, next) => {
   let shop = cookie.parse(req.headers.cookie).shop
@@ -28,5 +28,6 @@ export {
   getOrdersMiddleware,
   generateReport,
   updateFulfillment,
+  updateOrderStatus,
   setCookie
 }
