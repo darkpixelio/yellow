@@ -6,6 +6,7 @@ const getOrdersMiddleware = async (req, res, next) => {
   try {
     const orders = await getAllOrders(shop, token, null)
     let filteredOrder = []
+
     for(let item of orders) {
       let draft = {}
       let order = item.node
@@ -16,14 +17,27 @@ const getOrdersMiddleware = async (req, res, next) => {
       draft['customer'] = {}
       draft['customer']['first_name'] = order.customer ? order.customer.firstName : 'No'
       draft['customer']['last_name'] = order.customer ? order.customer.lastName : 'Customer'
-      draft['total_price'] = order.totalPriceSet.shopMoney.amount
-      draft['fulfilled_by'] = !order.metafield ? null : order.metafield.value
-      draft['metafield_id'] = !order.metafield ? null : order.metafield.id
+      draft['total_price'] = order.totalPriceSet?.shopMoney.amount ?? null
+
+      // find metafields
+      let metafields = order.metafields.edges;
+      let orderStatus = metafields.find(item => item.node.key == 'order_status')
+      let fulfillment_by = metafields.find(item => item.node.key == 'fulfillment_by')
+
+      // set fulfilled_by metafield
+      draft['fulfilled_by'] = !fulfillment_by ? null : fulfillment_by.node.value
+      draft['fulfilled_by_id'] = !fulfillment_by ? null : fulfillment_by.node.id
+
+      // set order status metafield
+      draft['order_status'] = !orderStatus ? null : orderStatus.node.value
+      draft['order_status_id'] = !orderStatus ? null : orderStatus.node.id
+
       draft['fulfillment_status'] = order.displayFulfillmentStatus
       draft['payment_status'] = order.displayFinancialStatus
       let activeFulfillment = order.fulfillments.find(item => item.status === 'SUCCESS')
       draft['fulfillment_order_id'] = !activeFulfillment ? null : activeFulfillment.id
 
+      console.log(draft)
       filteredOrder.push(draft)
     }
     res.locals.orders = filteredOrder

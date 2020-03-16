@@ -3,11 +3,10 @@ import { GraphQLClient } from 'graphql-request'
 
 import { gqlQuery } from '../graphql'
 
-const getAllOrders = async (shop, token, query) => {
+const getAllOrders = async (shop, token, cursor = null) => {
   return new Promise(async (resolve, reject) => {
     if(!shop || !token) reject({ message: 'getOrdersByDate function expect shop & token parameter' })
     try {
-      let ordersArray = []
       const requestObject = {
         url: `https://${shop}/admin/api/2020-01/graphql.json`,
         headers: {
@@ -15,25 +14,15 @@ const getAllOrders = async (shop, token, query) => {
         }
       }
       const client = new GraphQLClient(requestObject.url, { headers: requestObject.headers })
-      let cursor
+      const orderQuery = gqlQuery.fetchAllOrder(cursor)
+      const response = await client.request(orderQuery)
 
-      while(true) {
-        let orderQuery = gqlQuery.fetchAllOrder(cursor)
-        const response = await client.request(orderQuery)
-
-        if(response.orders.edges.length === 0) break
-        
-        response.orders.edges.forEach((item, i) => {
-          if(i == response.orders.edges.length - 1) cursor = item.cursor
-          ordersArray.push(item)
-        })
-      }
-      resolve(ordersArray)
+      resolve(response.orders?.edges)
     }
     catch(e) {
       console.log(e)
       if(e) reject(e)
-    }    
+    }
   })
 }
 
@@ -57,7 +46,7 @@ const getOrdersByDate = (shop, token, query) => {
         const response = await client.request(orderQuery)
 
         if(response.orders.edges.length === 0) break
-        
+
         response.orders.edges.forEach((item, i) => {
           if(i == response.orders.edges.length - 1) cursor = item.cursor
           ordersArray.push(item)

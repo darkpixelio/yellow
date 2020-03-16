@@ -22,8 +22,6 @@
   "homepage": "https://github.com/darkpixelio/yellow#readme",
   "dependencies": {
     "@babel/cli": "^7.8.3",
-    "@babel/core": "^7.8.3",
-    "@babel/node": "^7.8.3",
     "@babel/preset-env": "^7.8.3",
     "body-parser": "^1.19.0",
     "cookie": "^0.4.0",
@@ -36,5 +34,10 @@
     "request": "^2.88.0",
     "request-promise": "^4.2.5",
     "xlsx": "^0.15.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.7",
+    "@babel/node": "^7.8.7",
+    "express-http-proxy": "^1.6.0"
   }
 }

@@ -1,3 +1,3 @@
 export default {
-  appUri: 'https://dfad9a35.ngrok.io'
+  appUri: 'https://74e018dc.ngrok.io'
 }

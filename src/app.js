@@ -12,10 +12,10 @@ app.use(cors({
 }))
 
 app.use(express.static(path.join(__dirname, 'assets')))
-app.use('/files', express.static(path.join(__dirname, 'public')))
+app.use('/files', express.static(path.join(__dirname, '../public')))
 
-app.set('view engine', 'ejs')
-app.set('views', path.join(__dirname, 'views'))
+// app.set('view engine', 'ejs')
+// app.set('views', path.join(__dirname, 'views'))
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())

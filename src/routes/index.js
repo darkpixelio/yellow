@@ -1,4 +1,5 @@
 import express from 'express'
+import path from 'path'
 
 import installRoutes from './install'
 import ordersRoutes from './orders'
@@ -11,7 +12,9 @@ router.use('/orders', ordersRoutes)
 router.use('/fulfillment', fulfillmentRoutes)
 
 router.get('/', (req, res) => {
-  res.status(200).render('index')
+
+  res.status(200).sendFile(path.join(__dirname, '../assets/index.html'))
+
 })
 
 export default router

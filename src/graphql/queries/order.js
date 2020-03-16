@@ -1,128 +1,71 @@
 const getAllOrders = (cursor) => {
-  if(!cursor) {
-    return `query {
-      orders(first: 100) {
-        edges {
-          cursor,
-          node {
+  return `
+  query {
+    orders(after: ${cursor}, first: 51) {
+      edges {
+        cursor,
+        node {
+          id,
+          name,
+          email,
+          displayFinancialStatus,
+          displayFulfillmentStatus,
+          createdAt,
+          customer {
+            firstName,
+            lastName
+          },
+          fulfillments {
             id,
-            name,
-            email,
-            displayFinancialStatus,
-            displayFulfillmentStatus,
-            createdAt,
-            customer {
-              firstName,
-              lastName
-            },
-            fulfillments {
-              id,
-              status
-            },
-            transactions(first: 110) {
-              accountNumber,
-              amountSet {
-                presentmentMoney {
-                  amount,
-                  currencyCode
-                }
-                shopMoney {
-                  amount,
-                  currencyCode
-                }
-              }
-              authorizationCode,
-              createdAt,
-              errorCode,
-              formattedGateway,
-              gateway,
-              id,
-              kind,
-              status,
-              order {
-                id,
-                name
-              }
-            },
-            totalPriceSet {
-              shopMoney {
-                amount
-              }
+            status
+          },
+          transactions(first: 100) {
+            accountNumber,
+            amountSet {
               presentmentMoney {
-                amount
+                amount,
+                currencyCode
+              }
+              shopMoney {
+                amount,
+                currencyCode
               }
             }
-            metafield(namespace: "fulfillment_service", key: "fulfillment_by") {
+            authorizationCode,
+            createdAt,
+            errorCode,
+            formattedGateway,
+            gateway,
+            id,
+            kind,
+            status,
+            order {
               id,
-              value
+              name
+            }
+          },
+          totalPriceSet {
+            shopMoney {
+              amount
+            }
+            presentmentMoney {
+              amount
+            }
+          }
+          metafields(namespace: "fulfillment_service", first: 10) {
+            edges {
+              node {
+                id,
+                key,
+                value
+              }
             }
           }
         }
       }
-    }`
+    }
   }
-  else {
-    return `query {
-      orders(after: "${cursor}", first: 100) {
-        edges {
-          cursor,
-          node {
-            id,
-            name,
-            email,
-            displayFinancialStatus,
-            displayFulfillmentStatus,
-            createdAt,
-            customer {
-              firstName,
-              lastName
-            },
-            fulfillments {
-              id,
-              status
-            },
-            transactions(first: 100) {
-              accountNumber,
-              amountSet {
-                presentmentMoney {
-                  amount,
-                  currencyCode
-                }
-                shopMoney {
-                  amount,
-                  currencyCode
-                }
-              }
-              authorizationCode,
-              createdAt,
-              errorCode,
-              formattedGateway,
-              gateway,
-              id,
-              kind,
-              status,
-              order {
-                id,
-                name
-              }
-            },
-            totalPriceSet {
-              shopMoney {
-                amount
-              }
-              presentmentMoney {
-                amount
-              }
-            }
-            metafield(namespace: "fulfillment_service", key: "fulfillment_by") {
-              id,
-              value
-            }
-          }
-        }
-      }
-    }`
-  }
+  `;
 }
 
 const getOrdersByDate = (cursor, query) => {
@@ -172,6 +115,9 @@ const getOrdersByDate = (cursor, query) => {
             metafield(namespace: "fulfillment_service", key: "fulfillment_by") {
               value
             }
+            metafield(namespace: "order_status", key: "status") {
+              value
+            }
           }
         }
       }
@@ -211,6 +157,9 @@ const getOrdersByDate = (cursor, query) => {
               }
             }
             metafield(namespace: "fulfillment_service", key: "fulfillment_by") {
+              value
+            }
+            metafield(namespace: "order_status", key: "status") {
               value
             }
           }

@@ -4,9 +4,8 @@ const metafieldUpdate = (data, fulfillmentCreate, fulfillmentClose) => {
     orderUpdate(input: {
       id: "${data.id}",
       metafields: {
-        id: ${!data.metafield_id ? null : `"${data.metafield_id}"`},
         namespace: "fulfillment_service",
-        key: "fulfillment_by",
+        key: "${data.fulfilled_by_courier_key}",
         value: "${data.fulfilled_by_courier}",
         valueType: STRING
       }
@@ -31,12 +30,14 @@ const metafieldUpdate = (data, fulfillmentCreate, fulfillmentClose) => {
           id
           status
         }
-        metafield(
-          namespace: "fulfillment_service",
-          key: "fulfillment_by",
-        ) {
-          id
-          value
+        metafields(namespace: "fulfillment_service", first: 10) {
+          edges {
+            node {
+              id,
+              key,
+              value
+            }
+          }
         }
       }
     }

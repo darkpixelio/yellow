@@ -16,16 +16,17 @@ router.get('/', (req, res) => {
   const state = nonce()()
   const installUrl = `https://${shop}/admin/oauth/authorize?client_id=${key}&scope=${scopes}&state=${state}&redirect_uri=${uri}/install/callback`
 
-  res.cookie('state', state)
+  res.cookie('state', state, { sameSite: 'none', secure: true })
   res.redirect(installUrl)
 })
 
 router.get('/callback', verifyOrigin, validateRequest, generateToken, (req, res) => {
   const { shop, token } = res.locals
 
-  res.cookie('shop', shop)
-  res.cookie('token', token)
-  res.redirect('/')
+  res.cookie('shop', shop, { sameSite: 'none', secure: true })
+  res.cookie('token', token, { sameSite: 'none', secure: true })
+
+  res.redirect('/');
 })
 
 export default router
