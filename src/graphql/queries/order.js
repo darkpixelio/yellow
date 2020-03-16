@@ -1,7 +1,7 @@
 const getAllOrders = (cursor) => {
   return `
   query {
-    orders(after: ${cursor}, first: 51) {
+    orders(after: ${cursor}, first: 51, reverse: true) {
       edges {
         cursor,
         node {
