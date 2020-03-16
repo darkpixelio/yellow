@@ -17,7 +17,7 @@ const getOrdersMiddleware = async (req, res, next) => {
       draft['customer'] = {}
       draft['customer']['first_name'] = order.customer ? order.customer.firstName : 'No'
       draft['customer']['last_name'] = order.customer ? order.customer.lastName : 'Customer'
-      draft['total_price'] = order.totalPriceSet?.shopMoney.amount ?? null
+      draft['total_price'] = order.totalPriceSet.shopMoney.amount
 
       // find metafields
       let metafields = order.metafields.edges;
